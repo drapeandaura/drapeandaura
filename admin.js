@@ -42,25 +42,6 @@ $('loginForm').addEventListener('submit', async e=>{
   const { error } = await supabase.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
   if(error) $('loginError').textContent=error.message;
 });
-
-$('forgotPasswordLink').addEventListener('click', async (e) => {
-  e.preventDefault();
-  const email = $('loginEmail').value.trim();
-  if (!email) {
-    $('loginError').textContent = 'Enter your email above first, then click "Forgot password?".';
-    return;
-  }
-  $('loginError').textContent = '';
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://drapeandaura.pages.dev/reset-password.html'
-  });
-  if (error) {
-    $('loginError').textContent = error.message;
-  } else {
-    alert('If that email is registered, a password reset link has been sent.');
-  }
-});
-
 $('logoutBtn').addEventListener('click',()=>supabase.auth.signOut());
 
 document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>{
@@ -126,7 +107,7 @@ async function loadProducts(){
   document.querySelectorAll('.delete').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.id,data.find(p=>p.id===b.dataset.id)?.name||'this product')));
 }
 async function deleteProduct(id,name){
-  if(!confirm(`Delete "${name}"? This will also delete its variants.`))return;
+  if(!confirm(`Delete “${name}”? This will also delete its variants.`))return;
   const {error}=await supabase.from('products').delete().eq('id',id); if(error){alert(error.message);return;} await loadProducts(); showMessage('Product deleted.');
 }
 function showMessage(text){$('productMessage').textContent=text;show('productMessage',true);setTimeout(()=>show('productMessage',false),3000)}
