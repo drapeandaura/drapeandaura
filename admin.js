@@ -15,8 +15,8 @@
 <div class="auth-card">
 <div class="brand-mark">✧</div>
 <p class="eyebrow">DRAPE & AURA</p>
-<h1>Admin Sign In</h1>
-<p class="muted">This area is restricted to the Drape & Aura administrator.</p>
+<h1>Admin sign in</h1>
+<p class="muted">This area is restricted to the Drape & Aura administrator only.</p>
 <form id="loginForm">
 <label>Email<input id="loginEmail" type="email" autocomplete="email" required></label>
 <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
