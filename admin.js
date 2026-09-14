@@ -42,6 +42,24 @@ $('loginForm').addEventListener('submit', async e=>{
   const { error } = await supabase.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
   if(error) $('loginError').textContent=error.message;
 });
+$('forgotPasswordLink').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = $('loginEmail').value.trim();
+  if (!email) {
+    $('loginError').textContent = 'Enter your email above first, then click "Forgot password?".';
+    return;
+  }
+  $('loginError').textContent = '';
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://drapeandaura.pages.dev/reset-password.html'
+  });
+  if (error) {
+    $('loginError').textContent = error.message;
+  } else {
+    $('loginError').textContent = '';
+    alert('If that email is registered, a password reset link has been sent.');
+  }
+});
 $('logoutBtn').addEventListener('click',()=>supabase.auth.signOut());
 
 document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>{
