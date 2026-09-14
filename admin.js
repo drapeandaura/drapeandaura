@@ -1,133 +1,89 @@
-const { createClient } = window.supabase;
-const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drape & Aura — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
 
-const $ = (id) => document.getElementById(id);
-let editingProduct = null;
+<div id="loginView" class="screen-center">
+<div class="auth-card">
+<div class="brand-mark">✧</div>
+<p class="eyebrow">DRAPE & AURA</p>
+<h1>Admin Sign In</h1>
+<p class="muted">This area is restricted to the Drape & Aura administrator.</p>
+<form id="loginForm">
+<label>Email<input id="loginEmail" type="email" autocomplete="email" required></label>
+<label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+<button class="primary" type="submit">Sign In</button>
+<p id="loginError" class="error"></p>
+<p><a href="#" id="forgotPasswordLink">Forgot password?</a></p>
+</form>
+</div>
+</div>
 
-function show(id, visible=true){ $(id).classList.toggle('hidden', !visible); }
-function escapeHtml(value=''){ return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-function money(v){ return `₹${Number(v || 0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}`; }
+<div id="adminView" class="admin-shell hidden">
+<aside class="sidebar">
+<a class="brand" href="index.html"><span class="brand-mark">✧</span><span><strong>DRAPE & AURA</strong><small>Wear Your Aura.</small></span></a>
+<nav>
+<button class="nav-item active" data-section="productsSection">Products</button>
+<button class="nav-item" data-section="ordersSection">Orders</button>
+<button class="nav-item" data-section="contentSection">Site Content</button>
+</nav>
+<div class="sidebar-bottom"><a href="index.html">← View Store</a><button id="logoutBtn">Sign Out</button></div>
+</aside>
+<main class="admin-main">
+<header class="admin-header">
+<div><p class="eyebrow">ADMINISTRATION</p><h1>Drape & Aura</h1></div>
+<div class="admin-user" id="adminEmail"></div>
+</header>
 
-async function isAdmin(){
-  const { data, error } = await supabase.rpc('is_admin');
-  return !error && data === true;
-}
+<section id="productsSection" class="admin-section">
+<div class="section-heading"><div><h2>Products</h2><p>Manage products, sizes, colours and stock.</p></div><button id="newProductBtn" class="primary">+ Add Product</button></div>
+<div id="productMessage" class="message hidden"></div>
+<div id="productList" class="product-list"><div class="loading">Loading products…</div></div>
+</section>
 
-async function boot(){
-  if(!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY){
-    $('loginError').textContent='Supabase configuration is missing.';
-    return;
-  }
-  const { data:{session} } = await supabase.auth.getSession();
-  if(session) await enterAdmin(session);
-  supabase.auth.onAuthStateChange(async (_event, session) => {
-    if(session) await enterAdmin(session); else { show('adminView',false); show('loginView',true); }
-  });
-}
+<section id="ordersSection" class="admin-section hidden">
+<div class="section-heading"><div><h2>Orders</h2><p>Orders will appear here once checkout is connected.</p></div></div>
+<div id="ordersList" class="empty-state">No orders yet.</div>
+</section>
 
-async function enterAdmin(session){
-  const admin = await isAdmin();
-  if(!admin){
-    await supabase.auth.signOut();
-    $('loginError').textContent='This account is not authorised to access the admin area.';
-    show('loginView',true); show('adminView',false); return;
-  }
-  $('adminEmail').textContent=session.user.email || '';
-  show('loginView',false); show('adminView',true);
-  await loadProducts();
-}
+<section id="contentSection" class="admin-section hidden">
+<div class="section-heading"><div><h2>Site Content</h2><p>Edit About Us, Contact Us and policy sections.</p></div></div>
+<div id="contentList" class="empty-state">Site content editor will be connected next.</div>
+</section>
+</main>
+</div>
 
-$('loginForm').addEventListener('submit', async e=>{
-  e.preventDefault(); $('loginError').textContent='';
-  const { error } = await supabase.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
-  if(error) $('loginError').textContent=error.message;
-});
-$('forgotPasswordLink').addEventListener('click', async (e) => {
-  e.preventDefault();
-  const email = $('loginEmail').value.trim();
-  if (!email) {
-    $('loginError').textContent = 'Enter your email above first, then click "Forgot password?".';
-    return;
-  }
-  $('loginError').textContent = '';
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://drapeandaura.pages.dev/reset-password.html'
-  });
-  if (error) {
-    $('loginError').textContent = error.message;
-  } else {
-    $('loginError').textContent = '';
-    alert('If that email is registered, a password reset link has been sent.');
-  }
-});
-$('logoutBtn').addEventListener('click',()=>supabase.auth.signOut());
+<div id="productModal" class="modal hidden" aria-hidden="true">
+<div class="modal-card">
+<div class="modal-header"><div><p class="eyebrow" id="formEyebrow">PRODUCT</p><h2 id="formTitle">Add Product</h2></div><button id="closeModal" class="icon-btn" aria-label="Close">×</button></div>
+<form id="productForm">
+<input id="productId" type="hidden">
+<div class="form-grid">
+<label>Product name<input id="productName" required placeholder="e.g. Embroidered Kurta Set"></label>
+<label>Category<select id="productCategory" required><option value="Clothing">Clothing</option><option value="Jewellery">Jewellery</option><option value="Bags">Bags</option><option value="Accessories">Accessories</option></select></label>
+<label>Price (₹)<input id="productPrice" type="number" min="0" step="0.01" required></label>
+<label>Image URL<input id="productImage" type="url" placeholder="https://..."></label>
+<label class="full">Description<textarea id="productDescription" rows="4" placeholder="Describe the product…"></textarea></label>
+</div>
+<div class="checks"><label class="check"><input id="productAvailable" type="checkbox" checked> Available</label><label class="check"><input id="productNewArrival" type="checkbox"> New Arrival</label></div>
+<div class="variants-heading"><div><h3>Sizes, Colours & Stock</h3><p>For jewellery or accessories, use <strong>One Size</strong>.</p></div><button type="button" id="addVariantBtn" class="secondary">+ Add Variant</button></div>
+<div id="variants" class="variants"></div>
+<p id="formError" class="error"></p>
+<div class="modal-actions"><button type="button" id="cancelBtn" class="secondary">Cancel</button><button type="submit" class="primary" id="saveProductBtn">Save Product</button></div>
+</form>
+</div>
+</div>
 
-document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
-  document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden')); $(btn.dataset.section).classList.remove('hidden');
-}));
-
-function resetForm(){
-  editingProduct=null; $('productId').value=''; $('formEyebrow').textContent='PRODUCT'; $('formTitle').textContent='Add Product'; $('productForm').reset(); $('productAvailable').checked=true; $('productNewArrival').checked=false; $('variants').innerHTML=''; addVariant(); $('formError').textContent='';
-}
-function openModal(product=null){
-  resetForm();
-  if(product){
-    editingProduct=product; $('formEyebrow').textContent='EDIT PRODUCT'; $('formTitle').textContent='Edit Product'; $('productId').value=product.id; $('productName').value=product.name||''; $('productCategory').value=product.category||'Clothing'; $('productPrice').value=product.price??''; $('productImage').value=product.image_url||''; $('productDescription').value=product.description||''; $('productAvailable').checked=product.available!==false; $('productNewArrival').checked=product.new_arrival===true; $('variants').innerHTML=''; (product.product_variants||[]).forEach(addVariant); if(!(product.product_variants||[]).length)addVariant();
-  }
-  show('productModal',true); $('productModal').setAttribute('aria-hidden','false');
-}
-function closeModal(){show('productModal',false); $('productModal').setAttribute('aria-hidden','true');}
-$('newProductBtn').addEventListener('click',()=>openModal()); $('closeModal').addEventListener('click',closeModal); $('cancelBtn').addEventListener('click',closeModal);
-$('productModal').addEventListener('click',e=>{if(e.target===$('productModal'))closeModal()});
-
-function addVariant(v={}){
-  const row=document.createElement('div'); row.className='variant-row';
-  row.innerHTML=`<label>SKU<input class="v-sku" value="${escapeHtml(v.sku||'')}" placeholder="Optional"></label><label>Size<input class="v-size" value="${escapeHtml(v.size||'One Size')}" required placeholder="M"></label><label>Colour<input class="v-color" value="${escapeHtml(v.color||'')}" placeholder="Blue"></label><label>Stock<input class="v-stock" type="number" min="0" value="${Number.isFinite(v.stock_quantity)?v.stock_quantity:0}" required></label><button type="button" class="remove-variant" aria-label="Remove variant">×</button>`;
-  row.querySelector('.remove-variant').addEventListener('click',()=>row.remove()); $('variants').appendChild(row);
-}
-$('addVariantBtn').addEventListener('click',()=>addVariant());
-
-function getVariants(){return [...document.querySelectorAll('.variant-row')].map(r=>({sku:r.querySelector('.v-sku').value.trim()||null,size:r.querySelector('.v-size').value.trim()||'One Size',color:r.querySelector('.v-color').value.trim()||null,stock_quantity:Number(r.querySelector('.v-stock').value||0),available:Number(r.querySelector('.v-stock').value||0)>0}));}
-
-$('productForm').addEventListener('submit',async e=>{
-  e.preventDefault(); $('formError').textContent=''; const variants=getVariants();
-  if(!variants.length){$('formError').textContent='Add at least one size/colour variant.';return;}
-  const product={name:$('productName').value.trim(),category:$('productCategory').value,price:Number($('productPrice').value),image_url:$('productImage').value.trim()||null,description:$('productDescription').value.trim()||null,available:$('productAvailable').checked,new_arrival:$('productNewArrival').checked};
-  if(!product.name || Number.isNaN(product.price)){ $('formError').textContent='Please enter a product name and valid price.'; return; }
-  $('saveProductBtn').disabled=true; $('saveProductBtn').textContent='Saving…';
-  try{
-    let productId;
-    if(editingProduct){
-      const {error}=await supabase.from('products').update(product).eq('id',editingProduct.id); if(error)throw error; productId=editingProduct.id;
-      const {error:delError}=await supabase.from('product_variants').delete().eq('product_id',productId); if(delError)throw delError;
-    }else{
-      const {data,error}=await supabase.from('products').insert(product).select('id').single(); if(error)throw error; productId=data.id;
-    }
-    const rows=variants.map(v=>({...v,product_id:productId})); const {error:varError}=await supabase.from('product_variants').insert(rows); if(varError)throw varError;
-    closeModal(); await loadProducts(); showMessage(editingProduct?'Product updated successfully.':'Product added successfully.');
-  }catch(err){ $('formError').textContent=err.message || 'Could not save product.'; }
-  finally{$('saveProductBtn').disabled=false;$('saveProductBtn').textContent='Save Product';}
-});
-
-async function loadProducts(){
-  $('productList').innerHTML='<div class="loading">Loading products…</div>';
-  const {data,error}=await supabase.from('products').select('*, product_variants(*)').order('created_at',{ascending:false});
-  if(error){$('productList').innerHTML=`<div class="empty-state">Could not load products.<br><small>${escapeHtml(error.message)}</small></div>`;return;}
-  if(!data.length){$('productList').innerHTML='<div class="empty-state">No products yet. Click <strong>+ Add Product</strong> to create your first product.</div>';return;}
-  $('productList').innerHTML=data.map(p=>{
-    const total=(p.product_variants||[]).reduce((s,v)=>s+Number(v.stock_quantity||0),0); const variantCount=(p.product_variants||[]).length;
-    const badges=`<div class="badges">${p.new_arrival?'<span class="badge new">New Arrival</span>':''}${!p.available||total===0?'<span class="badge off">Out of Stock</span>':''}</div>`;
-    const style=p.image_url?`style="background-image:url('${escapeHtml(p.image_url)}')"`:'';
-    return `<div class="product-row"><div class="thumb" ${style}>${p.image_url?'':'Image'}</div><div class="product-info"><h3>${escapeHtml(p.name)}</h3><div class="meta"><span>${escapeHtml(p.category)}</span><span>${money(p.price)}</span><span>${variantCount} variant${variantCount===1?'':'s'}</span><span>${total} in stock</span></div>${badges}</div><div class="row-actions"><button class="small-btn edit" data-id="${p.id}">Edit</button><button class="small-btn danger delete" data-id="${p.id}">Delete</button></div></div>`;
-  }).join('');
-  document.querySelectorAll('.edit').forEach(b=>b.addEventListener('click',()=>openModal(data.find(p=>p.id===b.dataset.id))));
-  document.querySelectorAll('.delete').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.id,data.find(p=>p.id===b.dataset.id)?.name||'this product')));
-}
-async function deleteProduct(id,name){
-  if(!confirm(`Delete “${name}”? This will also delete its variants.`))return;
-  const {error}=await supabase.from('products').delete().eq('id',id); if(error){alert(error.message);return;} await loadProducts(); showMessage('Product deleted.');
-}
-function showMessage(text){$('productMessage').textContent=text;show('productMessage',true);setTimeout(()=>show('productMessage',false),3000)}
-
-boot();
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+</body>
+</html>
