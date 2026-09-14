@@ -1,89 +1,89 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Drape & Aura — Admin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drape & Aura — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <div id="loginView" class="screen-center">
-    <div class="auth-card">
-      <div class="brand-mark">✧</div>
-      <p class="eyebrow">DRAPE & AURA</p>
-      <h1>Admin Sign In</h1>
-      <p class="muted">This area is restricted to the Drape & Aura administrator.</p>
-      <form id="loginForm">
-        <label>Email<input id="loginEmail" type="email" autocomplete="email" required></label>
-        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
-        <button class="primary" type="submit">Sign In</button>
-        <p id="loginError" class="error"></p>
-      </form>
-    </div>
-  </div>
 
-  <div id="adminView" class="admin-shell hidden">
-    <aside class="sidebar">
-      <a class="brand" href="index.html"><span class="brand-mark">✧</span><span><strong>DRAPE & AURA</strong><small>Wear Your Aura.</small></span></a>
-      <nav>
-        <button class="nav-item active" data-section="productsSection">Products</button>
-        <button class="nav-item" data-section="ordersSection">Orders</button>
-        <button class="nav-item" data-section="contentSection">Site Content</button>
-      </nav>
-      <div class="sidebar-bottom"><a href="index.html">← View Store</a><button id="logoutBtn">Sign Out</button></div>
-    </aside>
+<div id="loginView" class="screen-center">
+<div class="auth-card">
+<div class="brand-mark">✧</div>
+<p class="eyebrow">DRAPE & AURA</p>
+<h1>Admin Sign In</h1>
+<p class="muted">This area is restricted to the Drape & Aura administrator.</p>
+<form id="loginForm">
+<label>Email<input id="loginEmail" type="email" autocomplete="email" required></label>
+<label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+<button class="primary" type="submit">Sign In</button>
+<p id="loginError" class="error"></p>
+<p><a href="#" id="forgotPasswordLink">Forgot password?</a></p>
+</form>
+</div>
+</div>
 
-    <main class="admin-main">
-      <header class="admin-header">
-        <div><p class="eyebrow">ADMINISTRATION</p><h1>Drape & Aura</h1></div>
-        <div class="admin-user" id="adminEmail"></div>
-      </header>
+<div id="adminView" class="admin-shell hidden">
+<aside class="sidebar">
+<a class="brand" href="index.html"><span class="brand-mark">✧</span><span><strong>DRAPE & AURA</strong><small>Wear Your Aura.</small></span></a>
+<nav>
+<button class="nav-item active" data-section="productsSection">Products</button>
+<button class="nav-item" data-section="ordersSection">Orders</button>
+<button class="nav-item" data-section="contentSection">Site Content</button>
+</nav>
+<div class="sidebar-bottom"><a href="index.html">← View Store</a><button id="logoutBtn">Sign Out</button></div>
+</aside>
+<main class="admin-main">
+<header class="admin-header">
+<div><p class="eyebrow">ADMINISTRATION</p><h1>Drape & Aura</h1></div>
+<div class="admin-user" id="adminEmail"></div>
+</header>
 
-      <section id="productsSection" class="admin-section">
-        <div class="section-heading"><div><h2>Products</h2><p>Manage products, sizes, colours and stock.</p></div><button id="newProductBtn" class="primary">+ Add Product</button></div>
-        <div id="productMessage" class="message hidden"></div>
-        <div id="productList" class="product-list"><div class="loading">Loading products…</div></div>
-      </section>
+<section id="productsSection" class="admin-section">
+<div class="section-heading"><div><h2>Products</h2><p>Manage products, sizes, colours and stock.</p></div><button id="newProductBtn" class="primary">+ Add Product</button></div>
+<div id="productMessage" class="message hidden"></div>
+<div id="productList" class="product-list"><div class="loading">Loading products…</div></div>
+</section>
 
-      <section id="ordersSection" class="admin-section hidden">
-        <div class="section-heading"><div><h2>Orders</h2><p>Orders will appear here once checkout is connected.</p></div></div>
-        <div id="ordersList" class="empty-state">No orders yet.</div>
-      </section>
+<section id="ordersSection" class="admin-section hidden">
+<div class="section-heading"><div><h2>Orders</h2><p>Orders will appear here once checkout is connected.</p></div></div>
+<div id="ordersList" class="empty-state">No orders yet.</div>
+</section>
 
-      <section id="contentSection" class="admin-section hidden">
-        <div class="section-heading"><div><h2>Site Content</h2><p>Edit About Us, Contact Us and policy sections.</p></div></div>
-        <div id="contentList" class="empty-state">Site content editor will be connected next.</div>
-      </section>
-    </main>
-  </div>
+<section id="contentSection" class="admin-section hidden">
+<div class="section-heading"><div><h2>Site Content</h2><p>Edit About Us, Contact Us and policy sections.</p></div></div>
+<div id="contentList" class="empty-state">Site content editor will be connected next.</div>
+</section>
+</main>
+</div>
 
-  <div id="productModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-card">
-      <div class="modal-header"><div><p class="eyebrow" id="formEyebrow">PRODUCT</p><h2 id="formTitle">Add Product</h2></div><button id="closeModal" class="icon-btn" aria-label="Close">×</button></div>
-      <form id="productForm">
-        <input id="productId" type="hidden">
-        <div class="form-grid">
-          <label>Product name<input id="productName" required placeholder="e.g. Embroidered Kurta Set"></label>
-          <label>Category<select id="productCategory" required><option value="Clothing">Clothing</option><option value="Jewellery">Jewellery</option><option value="Bags">Bags</option><option value="Accessories">Accessories</option></select></label>
-          <label>Price (₹)<input id="productPrice" type="number" min="0" step="0.01" required></label>
-          <label>Image URL<input id="productImage" type="url" placeholder="https://..."></label>
-          <label class="full">Description<textarea id="productDescription" rows="4" placeholder="Describe the product…"></textarea></label>
-        </div>
-        <div class="checks"><label class="check"><input id="productAvailable" type="checkbox" checked> Available</label><label class="check"><input id="productNewArrival" type="checkbox"> New Arrival</label></div>
+<div id="productModal" class="modal hidden" aria-hidden="true">
+<div class="modal-card">
+<div class="modal-header"><div><p class="eyebrow" id="formEyebrow">PRODUCT</p><h2 id="formTitle">Add Product</h2></div><button id="closeModal" class="icon-btn" aria-label="Close">×</button></div>
+<form id="productForm">
+<input id="productId" type="hidden">
+<div class="form-grid">
+<label>Product name<input id="productName" required placeholder="e.g. Embroidered Kurta Set"></label>
+<label>Category<select id="productCategory" required><option value="Clothing">Clothing</option><option value="Jewellery">Jewellery</option><option value="Bags">Bags</option><option value="Accessories">Accessories</option></select></label>
+<label>Price (₹)<input id="productPrice" type="number" min="0" step="0.01" required></label>
+<label>Image URL<input id="productImage" type="url" placeholder="https://..."></label>
+<label class="full">Description<textarea id="productDescription" rows="4" placeholder="Describe the product…"></textarea></label>
+</div>
+<div class="checks"><label class="check"><input id="productAvailable" type="checkbox" checked> Available</label><label class="check"><input id="productNewArrival" type="checkbox"> New Arrival</label></div>
+<div class="variants-heading"><div><h3>Sizes, Colours & Stock</h3><p>For jewellery or accessories, use <strong>One Size</strong>.</p></div><button type="button" id="addVariantBtn" class="secondary">+ Add Variant</button></div>
+<div id="variants" class="variants"></div>
+<p id="formError" class="error"></p>
+<div class="modal-actions"><button type="button" id="cancelBtn" class="secondary">Cancel</button><button type="submit" class="primary" id="saveProductBtn">Save Product</button></div>
+</form>
+</div>
+</div>
 
-        <div class="variants-heading"><div><h3>Sizes, Colours & Stock</h3><p>For jewellery or accessories, use <strong>One Size</strong>.</p></div><button type="button" id="addVariantBtn" class="secondary">+ Add Variant</button></div>
-        <div id="variants" class="variants"></div>
-        <p id="formError" class="error"></p>
-        <div class="modal-actions"><button type="button" id="cancelBtn" class="secondary">Cancel</button><button type="submit" class="primary" id="saveProductBtn">Save Product</button></div>
-      </form>
-    </div>
-  </div>
-
-  <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="admin.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
 </body>
 </html>
