@@ -21,8 +21,8 @@
 <label>Email<input id="loginEmail" type="email" autocomplete="email" required></label>
 <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
 <button class="primary" type="submit">Sign In</button>
-<p><a href="#" id="forgotPasswordLink">Forgot password?</a></p>
 <p id="loginError" class="error"></p>
+<p><a href="#" id="forgotPasswordLink">Forgot password?</a></p>
 </form>
 </div>
 </div>
