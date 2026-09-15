@@ -1,7 +1,12 @@
-Drape & Aura Build v4
+Drape & Aura Customer Account Update
 
-- Cart closes after successful WhatsApp order creation.
-- WhatsApp checkout creates a Supabase order and decrements variant stock atomically.
-- Admin Orders section loads orders and allows status updates.
-- Run create_orders_rpc.sql once in Supabase SQL Editor before testing checkout.
-- Keep your existing config.js unchanged.
+Replace only:
+- index.html
+- styles.css
+- app.js
+
+Do NOT replace config.js.
+
+Customer account now includes Sign In, Create Account, Forgot Password, Sign Out and Order History.
+Admin login remains only at the small bottom-left Admin button.
+The account panel includes a fashion/jewellery image from Unsplash.
