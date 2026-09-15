@@ -39,9 +39,48 @@
   function card(p){const stock=totalStock(p);const sold=!p.available||stock<=0;const badges=`<div class="card-badges">${sold?'<em class="off">Out of Stock</em>':(p.new_arrival?'<em class="new">New Arrival</em>':'')}</div>`;const img=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">`:'<span>Product image</span>';return `<article class="product-card"><button class="product-image" data-id="${p.id}">${img}${badges}</button><button class="product-name" data-id="${p.id}">${esc(p.name)}</button><p>${money(p.price)}</p><button class="add" data-id="${p.id}" ${sold?'disabled':''}>${sold?'Out of Stock':'♡  Add to Cart'}</button></article>`;}
   function renderShop(){const list=currentFilter==='All'?products:products.filter(p=>p.category===currentFilter);$('shopGrid').innerHTML=list.length?list.map(card).join(''):'<div class="loading-card">No products in this category yet.</div>';bindProductButtons();}
   function renderNew(){const list=products.filter(p=>p.new_arrival);$('newGrid').innerHTML=list.length?list.slice(0,4).map(card).join(''):'<div class="loading-card">New arrivals will appear here soon.</div>';bindProductButtons();}
-  function bindProductButtons(){document.querySelectorAll('.product-image,.product-name').forEach(b=>b.onclick=()=>showProduct(b.dataset.id));document.querySelectorAll('.add').forEach(b=>b.onclick=()=>addProduct(b.dataset.id));}
-  function showProduct(id){const p=products.find(x=>x.id===id);if(!p)return;const vars=p.product_variants||[];const stock=totalStock(p);const sold=!p.available||stock<=0;let variantHtml=vars.length?`<label class="variant-select">${vars.length>1?'Choose size / colour':'Size / Colour'}<select id="detailVariant">${vars.map(v=>`<option value="${v.id}" ${Number(v.stock_quantity)<=0?'disabled':''}>${esc(v.size||'One Size')}${v.color?' — '+esc(v.color):''}${Number(v.stock_quantity)<=0?' — Out of stock':''}</option>`).join('')}</select></label>`:'';$('productDetail').innerHTML=`<div class="detail-grid"><div class="detail-image">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'Product image'}</div><div><p class="eyebrow">${esc(p.category)}</p><h2>${esc(p.name)}</h2><p class="detail-price">${money(p.price)}</p><p class="detail-description">${esc(p.description||'')}</p>${variantHtml}<button class="button full-btn" id="detailAdd" ${sold?'disabled':''}>${sold?'Out of Stock':'Add to Cart'}</button></div></div>`;if(!sold)$('detailAdd').onclick=()=>{const v=vars.length?vars.find(x=>x.id===$('detailVariant').value):null;addProduct(id,v?.id);};open('productPanel');}
-  function addProduct(id,variantId=null){const p=products.find(x=>x.id===id);if(!p)return;const v=(p.product_variants||[]).find(x=>x.id===variantId) || (p.product_variants||[])[0];if(!v||Number(v.stock_quantity)<=0)return;const key=`${id}:${v.id}`;const found=cart.find(i=>i.key===key);if(found)found.quantity=Math.min(found.quantity+1,Number(v.stock_quantity));else cart.push({key,productId:id,variantId:v.id,name:p.name,variantLabel:`${v.size||'One Size'}${v.color?' — '+v.color:''}`,price:Number(v.price_override??p.price),quantity:1,maxStock:Number(v.stock_quantity),image_url:p.image_url});saveCart();}
+  function bindProductButtons(){
+    document.querySelectorAll('.product-image,.product-name').forEach(b=>{
+      b.onclick=e=>{e.preventDefault();e.stopPropagation();showProduct(b.dataset.id);};
+    });
+    document.querySelectorAll('.add').forEach(b=>{
+      b.onclick=e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        if(!b.disabled) showProduct(b.dataset.id);
+      };
+    });
+  }
+  function showProduct(id){
+    const p=products.find(x=>x.id===id); if(!p)return;
+    const vars=p.product_variants||[];
+    const availableVars=vars.filter(v=>Number(v.stock_quantity)>0);
+    const sold=!p.available||availableVars.length===0;
+    const firstAvailable=availableVars[0];
+    const variantHtml=vars.length?`<label class="variant-select">${vars.length>1?'Choose size / colour':'Size / Colour'}<select id="detailVariant">${vars.map(v=>`<option value="${v.id}" ${v.id===firstAvailable?.id?'selected':''} ${Number(v.stock_quantity)<=0?'disabled':''}>${esc(v.size||'One Size')}${v.color?' — '+esc(v.color):''}${Number(v.stock_quantity)<=0?' — Out of stock':''}</option>`).join('')}</select></label>`:'';
+    const qtyHtml=!sold?`<div class="quantity-picker"><span>Quantity</span><div class="quantity-controls"><button type="button" id="qtyMinus" aria-label="Decrease quantity">−</button><input id="detailQuantity" type="number" min="1" max="${Number(firstAvailable?.stock_quantity||1)}" value="1" inputmode="numeric"><button type="button" id="qtyPlus" aria-label="Increase quantity">+</button></div><small id="stockNote" class="stock-note"></small></div>`:'';
+    $('productDetail').innerHTML=`<div class="detail-grid"><div class="detail-image">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'Product image'}</div><div><p class="eyebrow">${esc(p.category)}</p><h2>${esc(p.name)}</h2><p class="detail-price">${money(p.price)}</p><p class="detail-description">${esc(p.description||'')}</p>${variantHtml}${qtyHtml}<button class="button full-btn" id="detailAdd" ${sold?'disabled':''}>${sold?'Out of Stock':'Add to Cart'}</button></div></div>`;
+    if(!sold){
+      const select=$('detailVariant'), qty=$('detailQuantity'), note=$('stockNote');
+      const syncQty=()=>{const v=vars.find(x=>x.id===select.value);const max=Number(v?.stock_quantity||0);qty.max=String(Math.max(1,max));if(Number(qty.value)<1)qty.value=1;if(Number(qty.value)>max)qty.value=max;note.textContent=`${max} available`;};
+      select.onchange=syncQty;
+      $('qtyMinus').onclick=()=>{qty.value=Math.max(1,Number(qty.value||1)-1);syncQty();};
+      $('qtyPlus').onclick=()=>{const max=Number(vars.find(x=>x.id===select.value)?.stock_quantity||1);qty.value=Math.min(max,Number(qty.value||1)+1);syncQty();};
+      qty.oninput=syncQty;
+      syncQty();
+      $('detailAdd').onclick=e=>{e.preventDefault();e.stopPropagation();const v=vars.find(x=>x.id===select.value);if(!v||Number(v.stock_quantity)<=0)return;const quantity=Math.max(1,Math.min(Number(qty.value||1),Number(v.stock_quantity)));addProduct(id,v.id,quantity);close('productPanel');};
+    }
+    open('productPanel');
+  }
+  function addProduct(id,variantId=null,quantity=1){
+    const p=products.find(x=>x.id===id);if(!p)return;
+    const v=(p.product_variants||[]).find(x=>x.id===variantId)||(p.product_variants||[])[0];
+    if(!v||Number(v.stock_quantity)<=0)return;
+    const maxStock=Number(v.stock_quantity); quantity=Math.max(1,Math.min(Number(quantity)||1,maxStock));
+    const key=`${id}:${v.id}`;const found=cart.find(i=>i.key===key);
+    if(found)found.quantity=Math.min(found.quantity+quantity,maxStock);else cart.push({key,productId:id,variantId:v.id,name:p.name,variantLabel:`${v.size||'One Size'}${v.color?' — '+v.color:''}`,price:Number(v.price_override??p.price),quantity,maxStock,image_url:p.image_url});
+    saveCart();
+  }
   function renderCart(){if(!cart.length){$('cartItems').innerHTML='<div class="empty-cart">Your bag is empty.</div>';}else{$('cartItems').innerHTML=cart.map((i,idx)=>`<div class="cart-row"><div class="cart-thumb">${i.image_url?`<img src="${esc(i.image_url)}" alt="">`:''}</div><div><strong>${esc(i.name)}</strong><small>${esc(i.variantLabel)}</small><div class="qty"><button data-cart-dec="${idx}">−</button><span>${i.quantity}</span><button data-cart-inc="${idx}">+</button><button data-cart-del="${idx}" class="remove">Remove</button></div></div><b>${money(i.price*i.quantity)}</b></div>`).join('');document.querySelectorAll('[data-cart-dec]').forEach(b=>b.onclick=()=>changeQty(+b.dataset.cartDec,-1));document.querySelectorAll('[data-cart-inc]').forEach(b=>b.onclick=()=>changeQty(+b.dataset.cartInc,1));document.querySelectorAll('[data-cart-del]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.cartDel,1);saveCart();});}$('cartTotal').textContent=money(cart.reduce((s,i)=>s+i.price*i.quantity,0));}
   function changeQty(i,d){const item=cart[i];if(!item)return;item.quantity+=d;if(item.quantity<=0)cart.splice(i,1);else item.quantity=Math.min(item.quantity,item.maxStock);saveCart();}
   $('checkoutBtn').onclick=()=>{if(!cart.length){$('checkoutNote').textContent='Your bag is empty.';return;}$('checkoutForm').classList.toggle('hidden');$('checkoutNote').textContent=$('checkoutForm').classList.contains('hidden')?'Orders are sent to WhatsApp for confirmation.':'Enter your details below and send the order on WhatsApp.';};
