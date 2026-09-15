@@ -1,3 +1,4 @@
+(() => {
 const { createClient } = window.supabase;
 const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
@@ -160,3 +161,4 @@ async function deleteProduct(id,name){
 function showMessage(text){$('productMessage').textContent=text;show('productMessage',true);setTimeout(()=>show('productMessage',false),3000)}
 
 boot();
+})();
