@@ -4,84 +4,86 @@ const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 const $ = (id) => document.getElementById(id);
 let editingProduct = null;
 
-function show(id, visible=true){ $(id).classList.toggle('hidden', !visible); }
+function show(id, visible=true){ const el=$(id); if(el) el.classList.toggle('hidden', !visible); }
 function escapeHtml(value=''){ return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function money(v){ return `₹${Number(v || 0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}`; }
-
-async function isAdmin(){
-  const { data, error } = await supabase.rpc('is_admin');
-  return !error && data === true;
-}
+function setStatus(id, text, kind='error'){ const el=$(id); if(!el)return; el.textContent=text||''; el.className = kind === 'success' ? 'success' : 'error'; }
 
 function isRecoveryUrl(){
   const hash = new URLSearchParams(window.location.hash.replace(/^#/,''));
   const query = new URLSearchParams(window.location.search);
   return hash.get('type') === 'recovery' || query.get('type') === 'recovery';
 }
-
 function showLogin(){ show('adminView',false); show('resetView',false); show('loginView',true); }
 function showReset(){ show('loginView',false); show('adminView',false); show('resetView',true); }
 
-async function boot(){
-  if(!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY){
-    $('loginError').textContent='Supabase configuration is missing.';
-    return;
-  }
-  const { data:{session} } = await supabase.auth.getSession();
-  if(isRecoveryUrl()){
-    showReset();
-  } else if(session) {
-    await enterAdmin(session);
-  }
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if(event === 'PASSWORD_RECOVERY'){ showReset(); return; }
-    if(session && !isRecoveryUrl()) await enterAdmin(session);
-    else if(!session) showLogin();
-  });
+async function isAdmin(){
+  const { data, error } = await supabase.rpc('is_admin');
+  return !error && data === true;
 }
-
 async function enterAdmin(session){
   const admin = await isAdmin();
   if(!admin){
     await supabase.auth.signOut();
-    $('loginError').textContent='This account is not authorised to access the admin area.';
-    show('loginView',true); show('adminView',false); return;
+    setStatus('loginError','This account is not authorised to access the admin area.');
+    showLogin(); return;
   }
   $('adminEmail').textContent=session.user.email || '';
   show('loginView',false); show('adminView',true);
   await loadProducts();
 }
 
-$('loginForm').addEventListener('submit', async e=>{
-  e.preventDefault(); $('loginError').textContent='';
-  const { error } = await supabase.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
-  if(error) $('loginError').textContent=error.message;
+// Register this immediately after createClient. Supabase documents that PASSWORD_RECOVERY
+// is emitted when the recovery link is opened.
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Drape & Aura auth event:', event);
+  if(event === 'PASSWORD_RECOVERY') { showReset(); return; }
+  if(event === 'SIGNED_OUT') { showLogin(); return; }
+  if(event === 'SIGNED_IN' && session && !isRecoveryUrl()) { enterAdmin(session); }
 });
 
-$('forgotPasswordBtn').addEventListener('click', async ()=>{
-  $('loginError').textContent='';
+async function boot(){
+  if(!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY){ setStatus('loginError','Supabase configuration is missing.'); return; }
+  if(isRecoveryUrl()) { showReset(); return; }
+  const { data:{session} } = await supabase.auth.getSession();
+  if(session) await enterAdmin(session); else showLogin();
+}
+
+$('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault(); setStatus('loginError','');
+  const { error } = await supabase.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
+  if(error) setStatus('loginError',error.message);
+});
+
+// Forgot password: explicitly send the user back to this exact admin page.
+$('forgotPasswordBtn').addEventListener('click', async e=>{
+  e.preventDefault();
   const email=$('loginEmail').value.trim();
-  if(!email){ $('loginError').textContent='Enter the admin email address first, then click “Forgot password?”.'; return; }
-  const redirectTo = `${window.location.origin}${window.location.pathname}`;
-  const { error } = await supabase.auth.resetPasswordForEmail(email,{redirectTo});
-  if(error) $('loginError').textContent=error.message;
-  else $('loginError').textContent='Password recovery email sent. Check your inbox.';
+  if(!email){ setStatus('loginError','Enter the admin email address first, then click “Forgot password?”.'); $('loginEmail').focus(); return; }
+  const btn=$('forgotPasswordBtn'); btn.disabled=true; btn.textContent='Sending…';
+  setStatus('loginError','Sending password recovery email…','success');
+  try{
+    const redirectTo = 'https://drapeandaura.pages.dev/admin.html';
+    const { error } = await supabase.auth.resetPasswordForEmail(email,{redirectTo});
+    if(error) setStatus('loginError',error.message);
+    else setStatus('loginError','Password recovery email sent. Please check your inbox.','success');
+  }catch(err){ setStatus('loginError',err?.message || 'Could not send password recovery email.'); }
+  finally{ btn.disabled=false; btn.textContent='Forgot password?'; }
 });
 
 $('resetForm').addEventListener('submit', async e=>{
-  e.preventDefault(); $('resetError').textContent='';
-  const password=$('newPassword').value;
-  const confirm=$('confirmPassword').value;
-  if(password!==confirm){ $('resetError').textContent='The passwords do not match.'; return; }
+  e.preventDefault(); setStatus('resetError','');
+  const password=$('newPassword').value; const confirm=$('confirmPassword').value;
+  if(password.length < 6){ setStatus('resetError','Password must be at least 6 characters.'); return; }
+  if(password!==confirm){ setStatus('resetError','The passwords do not match.'); return; }
   $('resetPasswordBtn').disabled=true; $('resetPasswordBtn').textContent='Updating…';
   const { error } = await supabase.auth.updateUser({password});
-  if(error){
-    $('resetError').textContent=error.message;
-  }else{
+  if(error){ setStatus('resetError',error.message); }
+  else{
     $('newPassword').value=''; $('confirmPassword').value='';
     history.replaceState({},document.title,window.location.pathname);
     await supabase.auth.signOut();
-    $('loginError').textContent='Password updated. You can now sign in.';
+    setStatus('loginError','Password updated successfully. You can now sign in.','success');
     showLogin();
   }
   $('resetPasswordBtn').disabled=false; $('resetPasswordBtn').textContent='Update Password';
