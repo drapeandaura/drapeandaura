@@ -27,7 +27,7 @@
     $('checkoutForm').classList.toggle('hidden');
     $('checkoutNote').textContent=$('checkoutForm').classList.contains('hidden')?'Orders are sent to WhatsApp for confirmation.':'Enter your details below and send the order on WhatsApp.';
   };
-  $('whatsappBtn').onclick=()=>{
+  $('whatsappBtn').onclick=async()=>{
     const number=String(window.WHATSAPP_NUMBER||'YOUR_WHATSAPP_NUMBER').replace(/\D/g,'');
     const name=$('customerName').value.trim();
     const phone=$('customerPhone').value.trim();
@@ -35,10 +35,21 @@
     const msg=$('checkoutMsg');
     if(!number||number==='YOUR_WHATSAPP_NUMBER'.replace(/\D/g,'')){msg.textContent='Please add your WhatsApp number in config.js first.';return;}
     if(!name||!phone||!address){msg.textContent='Please fill in your name, phone and delivery address.';return;}
-    const total=cart.reduce((sum,i)=>sum+i.price*i.quantity,0);
-    const lines=['*Drape & Aura – New Order*','',`*Customer:* ${name}`,`*Phone:* ${phone}`,`*Address:* ${address}`,'','*Items:*',...cart.map((i,n)=>`${n+1}. ${i.name} — ${i.variantLabel} × ${i.quantity} — ${money(i.price*i.quantity)}`),'',`*Total: ${money(total)}*`,'','Please confirm my order.'];
-    const url=`https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
-    window.open(url,'_blank','noopener,noreferrer');
+    if(!cart.length){msg.textContent='Your bag is empty.';return;}
+    const btn=$('whatsappBtn'); btn.disabled=true; btn.textContent='Creating order…'; msg.textContent='Saving your order…';
+    try{
+      const {data:orderId,error}=await supabase.rpc('create_whatsapp_order',{
+        p_customer_name:name,p_email:null,p_phone:phone,p_address:address,
+        p_items:cart.map(i=>({variant_id:i.variantId,quantity:i.quantity}))
+      });
+      if(error)throw error;
+      const total=cart.reduce((sum,i)=>sum+i.price*i.quantity,0);
+      const lines=['*Drape & Aura – New Order*',`*Order ID:* ${orderId}`,'',`*Customer:* ${name}`,`*Phone:* ${phone}`,`*Address:* ${address}`,'','*Items:*',...cart.map((i,n)=>`${n+1}. ${i.name} — ${i.variantLabel} × ${i.quantity} — ${money(i.price*i.quantity)}`),'',`*Total: ${money(total)}*`,'','Please confirm my order.'];
+      const url=`https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
+      cart=[];saveCart();close('cartPanel');$('checkoutForm').classList.add('hidden');msg.textContent='';
+      window.location.href=url;
+    }catch(err){console.error(err);msg.textContent=err?.message||'Could not create the order. Please try again.';}
+    finally{btn.disabled=false;btn.textContent='Order via WhatsApp';}
   };
   document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentFilter=b.dataset.filter;renderShop();});
   document.querySelectorAll('.cats a[data-category]').forEach(a=>a.onclick=()=>{currentFilter=a.dataset.category;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter===currentFilter));setTimeout(renderShop,50);});
