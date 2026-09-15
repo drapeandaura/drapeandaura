@@ -13,15 +13,30 @@ async function isAdmin(){
   return !error && data === true;
 }
 
+function isRecoveryUrl(){
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/,''));
+  const query = new URLSearchParams(window.location.search);
+  return hash.get('type') === 'recovery' || query.get('type') === 'recovery';
+}
+
+function showLogin(){ show('adminView',false); show('resetView',false); show('loginView',true); }
+function showReset(){ show('loginView',false); show('adminView',false); show('resetView',true); }
+
 async function boot(){
   if(!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY){
     $('loginError').textContent='Supabase configuration is missing.';
     return;
   }
   const { data:{session} } = await supabase.auth.getSession();
-  if(session) await enterAdmin(session);
-  supabase.auth.onAuthStateChange(async (_event, session) => {
-    if(session) await enterAdmin(session); else { show('adminView',false); show('loginView',true); }
+  if(isRecoveryUrl()){
+    showReset();
+  } else if(session) {
+    await enterAdmin(session);
+  }
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if(event === 'PASSWORD_RECOVERY'){ showReset(); return; }
+    if(session && !isRecoveryUrl()) await enterAdmin(session);
+    else if(!session) showLogin();
   });
 }
 
@@ -42,6 +57,36 @@ $('loginForm').addEventListener('submit', async e=>{
   const { error } = await supabase.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
   if(error) $('loginError').textContent=error.message;
 });
+
+$('forgotPasswordBtn').addEventListener('click', async ()=>{
+  $('loginError').textContent='';
+  const email=$('loginEmail').value.trim();
+  if(!email){ $('loginError').textContent='Enter the admin email address first, then click “Forgot password?”.'; return; }
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error) $('loginError').textContent=error.message;
+  else $('loginError').textContent='Password recovery email sent. Check your inbox.';
+});
+
+$('resetForm').addEventListener('submit', async e=>{
+  e.preventDefault(); $('resetError').textContent='';
+  const password=$('newPassword').value;
+  const confirm=$('confirmPassword').value;
+  if(password!==confirm){ $('resetError').textContent='The passwords do not match.'; return; }
+  $('resetPasswordBtn').disabled=true; $('resetPasswordBtn').textContent='Updating…';
+  const { error } = await supabase.auth.updateUser({password});
+  if(error){
+    $('resetError').textContent=error.message;
+  }else{
+    $('newPassword').value=''; $('confirmPassword').value='';
+    history.replaceState({},document.title,window.location.pathname);
+    await supabase.auth.signOut();
+    $('loginError').textContent='Password updated. You can now sign in.';
+    showLogin();
+  }
+  $('resetPasswordBtn').disabled=false; $('resetPasswordBtn').textContent='Update Password';
+});
+
 $('logoutBtn').addEventListener('click',()=>supabase.auth.signOut());
 
 document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>{
