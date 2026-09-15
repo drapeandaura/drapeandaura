@@ -22,7 +22,24 @@
   function addProduct(id,variantId=null){const p=products.find(x=>x.id===id);if(!p)return;const v=(p.product_variants||[]).find(x=>x.id===variantId) || (p.product_variants||[])[0];if(!v||Number(v.stock_quantity)<=0)return;const key=`${id}:${v.id}`;const found=cart.find(i=>i.key===key);if(found)found.quantity=Math.min(found.quantity+1,Number(v.stock_quantity));else cart.push({key,productId:id,variantId:v.id,name:p.name,variantLabel:`${v.size||'One Size'}${v.color?' — '+v.color:''}`,price:Number(v.price_override??p.price),quantity:1,maxStock:Number(v.stock_quantity),image_url:p.image_url});saveCart();}
   function renderCart(){if(!cart.length){$('cartItems').innerHTML='<div class="empty-cart">Your bag is empty.</div>';}else{$('cartItems').innerHTML=cart.map((i,idx)=>`<div class="cart-row"><div class="cart-thumb">${i.image_url?`<img src="${esc(i.image_url)}" alt="">`:''}</div><div><strong>${esc(i.name)}</strong><small>${esc(i.variantLabel)}</small><div class="qty"><button data-cart-dec="${idx}">−</button><span>${i.quantity}</span><button data-cart-inc="${idx}">+</button><button data-cart-del="${idx}" class="remove">Remove</button></div></div><b>${money(i.price*i.quantity)}</b></div>`).join('');document.querySelectorAll('[data-cart-dec]').forEach(b=>b.onclick=()=>changeQty(+b.dataset.cartDec,-1));document.querySelectorAll('[data-cart-inc]').forEach(b=>b.onclick=()=>changeQty(+b.dataset.cartInc,1));document.querySelectorAll('[data-cart-del]').forEach(b=>b.onclick=()=>{cart.splice(+b.dataset.cartDel,1);saveCart();});}$('cartTotal').textContent=money(cart.reduce((s,i)=>s+i.price*i.quantity,0));}
   function changeQty(i,d){const item=cart[i];if(!item)return;item.quantity+=d;if(item.quantity<=0)cart.splice(i,1);else item.quantity=Math.min(item.quantity,item.maxStock);saveCart();}
-  $('checkoutBtn').onclick=()=>alert('Checkout + WhatsApp ordering is the next build step. Your cart is already being saved in this browser.');
+  $('checkoutBtn').onclick=()=>{
+    if(!cart.length){$('checkoutNote').textContent='Your bag is empty.';return;}
+    $('checkoutForm').classList.toggle('hidden');
+    $('checkoutNote').textContent=$('checkoutForm').classList.contains('hidden')?'Orders are sent to WhatsApp for confirmation.':'Enter your details below and send the order on WhatsApp.';
+  };
+  $('whatsappBtn').onclick=()=>{
+    const number=String(window.WHATSAPP_NUMBER||'YOUR_WHATSAPP_NUMBER').replace(/\D/g,'');
+    const name=$('customerName').value.trim();
+    const phone=$('customerPhone').value.trim();
+    const address=$('customerAddress').value.trim();
+    const msg=$('checkoutMsg');
+    if(!number||number==='YOUR_WHATSAPP_NUMBER'.replace(/\D/g,'')){msg.textContent='Please add your WhatsApp number in config.js first.';return;}
+    if(!name||!phone||!address){msg.textContent='Please fill in your name, phone and delivery address.';return;}
+    const total=cart.reduce((sum,i)=>sum+i.price*i.quantity,0);
+    const lines=['*Drape & Aura – New Order*','',`*Customer:* ${name}`,`*Phone:* ${phone}`,`*Address:* ${address}`,'','*Items:*',...cart.map((i,n)=>`${n+1}. ${i.name} — ${i.variantLabel} × ${i.quantity} — ${money(i.price*i.quantity)}`),'',`*Total: ${money(total)}*`,'','Please confirm my order.'];
+    const url=`https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
+    window.open(url,'_blank','noopener,noreferrer');
+  };
   document.querySelectorAll('.filter').forEach(b=>b.onclick=()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentFilter=b.dataset.filter;renderShop();});
   document.querySelectorAll('.cats a[data-category]').forEach(a=>a.onclick=()=>{currentFilter=a.dataset.category;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter===currentFilter));setTimeout(renderShop,50);});
   $('searchInput').addEventListener('input',()=>{const q=$('searchInput').value.trim().toLowerCase();const list=q?products.filter(p=>(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(q)):[];$('searchResults').innerHTML=q?(list.length?list.map(p=>`<button class="search-item" data-id="${p.id}"><span>${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:''}</span><strong>${esc(p.name)}</strong><small>${money(p.price)}</small></button>`).join(''):'<p class="muted-note">No products found.</p>'):'<p class="muted-note">Start typing to search the collection.</p>';document.querySelectorAll('.search-item').forEach(b=>b.onclick=()=>{close('searchPanel');showProduct(b.dataset.id);});});
