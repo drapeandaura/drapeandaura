@@ -1,17 +1,26 @@
-# Drape & Aura — Customer Account v2
+Drape & Aura — Customer Account + Hero Carousel Final
 
-This update fixes the customer account popup close behavior after sign-in.
-
-## Replace these files in GitHub
+Replace these files in your GitHub repository:
 - index.html
 - styles.css
 - app.js
+- hero-1.jpg
+- hero-2.jpg
+- hero-3.jpg
+- hero-4.jpg
 
-## Do NOT replace
-- config.js — keep your existing Drape & Aura Supabase + WhatsApp configuration.
+Do NOT replace config.js. Keep your existing Supabase and WhatsApp settings.
 
-## Fixes
-- Account popup close (X) now has a direct, protected click handler.
-- Escape key closes open popups.
-- Close button is kept above the account image/content layer.
-- Existing customer sign-in, sign-up, password reset and order-history functionality is retained.
+This version keeps the working customer sign-in/account behavior, auto-closes the account popup after successful sign-in, shows the customer greeting, and includes a shorter 4-slide hero carousel with working previous/next arrows, dots, and automatic rotation.
+
+Hero images are original AI-generated Drape & Aura artwork, prepared specifically for this site.
+
+Recommended GitHub layout:
+index.html
+styles.css
+app.js
+config.js   <-- keep your existing file
+hero-1.jpg
+hero-2.jpg
+hero-3.jpg
+hero-4.jpg
