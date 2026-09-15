@@ -8,10 +8,11 @@
   const totalStock=p=>(p.product_variants||[]).reduce((s,v)=>s+Number(v.stock_quantity||0),0);
   function saveCart(){localStorage.setItem('drapeAuraCart',JSON.stringify(cart));renderCart();updateCount();}
   function updateCount(){$('count').textContent=cart.reduce((s,i)=>s+i.quantity,0);}
-  function open(id){$(id).classList.remove('hidden');document.body.classList.add('no-scroll');}
-  function close(id){$(id).classList.add('hidden');if(!document.querySelector('.overlay:not(.hidden)'))document.body.classList.remove('no-scroll');}
-  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>close(b.dataset.close)));
+  function open(id){const el=$(id);if(!el)return;el.classList.remove('hidden');document.body.classList.add('no-scroll');}
+  function close(id){const el=$(id);if(!el)return;el.classList.add('hidden');if(!document.querySelector('.overlay:not(.hidden)'))document.body.classList.remove('no-scroll');}
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();close(b.dataset.close);}));
   document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)close(o.id)}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay:not(.hidden)').forEach(o=>close(o.id));}});
   $('searchBtn').onclick=()=>{open('searchPanel');setTimeout(()=>$('searchInput').focus(),50);};
   $('accountBtn').onclick=async()=>{await renderAccount();open('accountPanel');}; $('cartBtn').onclick=()=>{renderCart();open('cartPanel');};
 
