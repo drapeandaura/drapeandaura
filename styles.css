@@ -483,4 +483,122 @@ body.no-scroll{overflow:hidden}
 
 @media(max-width:700px){
 .overlay{padding:10px;align-items:center;}
-.panel.product-panel{width:100%;max-height:92vh;padding
+.panel.product-panel{width:100%;max-height:92vh;padding:22px 15px;border-radius:16px;}
+.product-panel .detail-grid{gap:18px;}
+.product-panel .detail-image{height:260px;max-height:42vh;}
+.product-panel .panel h2{font-size:32px;}
+}
+
+/* =========================================================
+   MOBILE HERO CAROUSEL — FINAL CLEANUP
+   - No cross-fade ghosting/overlap on phones
+   - No translucent wash over the photograph
+   - Keep the photo sharp and visible on the right
+   - Give the text its own solid readable area
+   ========================================================= */
+
+@media(max-width:600px){
+.hero{
+  height:300px !important;
+  min-height:300px !important;
+  background:#f7f0e4 !important;
+}
+
+.hero-slide{
+  inset:0 !important;
+  background-size:auto 100% !important;
+  background-position:right center !important;
+  background-repeat:no-repeat !important;
+  transition:none !important;
+}
+
+.hero-slide:not(.active){
+  opacity:0 !important;
+  visibility:hidden !important;
+  z-index:0 !important;
+}
+
+.hero-slide.active{
+  opacity:1 !important;
+  visibility:visible !important;
+  z-index:1 !important;
+}
+
+.hero-shade{
+  display:none !important;
+}
+
+.hero .copy{
+  position:absolute !important;
+  left:0 !important;
+  top:0 !important;
+  bottom:0 !important;
+  width:54% !important;
+  max-width:54% !important;
+  padding:24px 10px 38px 18px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:center !important;
+  background:rgba(247,240,228,.96) !important;
+  z-index:2 !important;
+}
+
+.hero .copy::after{
+  content:"";
+  position:absolute;
+  top:0;
+  right:-28px;
+  bottom:0;
+  width:40px;
+  background:linear-gradient(90deg,rgba(247,240,228,.96),rgba(247,240,228,0));
+  pointer-events:none;
+}
+
+.hero .eyebrow{
+  font-size:8px !important;
+  letter-spacing:2px !important;
+  margin:0 0 5px !important;
+}
+
+.hero h1{
+  font-size:28px !important;
+  line-height:1.02 !important;
+  margin:7px 0 9px !important;
+}
+
+.hero .copy>p:not(.eyebrow){
+  font-size:9px !important;
+  line-height:1.45 !important;
+  margin:0 !important;
+}
+
+.hero .button{
+  align-self:flex-start !important;
+  padding:8px 11px !important;
+  font-size:9px !important;
+  margin-top:10px !important;
+}
+
+.hero .arrow{
+  top:auto !important;
+  bottom:31px !important;
+  width:28px !important;
+  height:28px !important;
+  font-size:20px !important;
+  z-index:5 !important;
+  background:#173f34dd !important;
+}
+
+.hero .arrow.l{left:10px !important;}
+.hero .arrow.r{right:10px !important;}
+
+.hero .dots{
+  bottom:8px !important;
+  z-index:5 !important;
+}
+
+.hero-dot{
+  width:7px !important;
+  height:7px !important;
+}
+}
